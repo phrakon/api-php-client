@@ -32,6 +32,11 @@ class Client extends BaseObject
     public $password;
 
     /**
+     * @var string
+     */
+    public $phone;
+
+    /**
      * Путь до токена.
      *
      * @var string
@@ -222,16 +227,23 @@ class Client extends BaseObject
     private function auth()
     {
         $client = $this->getHttpClient();
-        $options = $this->options;
-        $options['headers']['Authorization'] = 'Basic ' . base64_encode($this->login . ":" . $this->password);
-        $response = $client->request('GET', $this->createUrl('auth'), $options);
-        if ($response->getStatusCode() != 200) {
+        $response = $client->post('https://www.sima-land.ru/api/v5/signin', [
+            'json' => [
+                'email' => $this->login,
+                'password' => $this->password,
+                'phone' => $this->phone,
+                'regulation' => true,
+            ],
+        ]);
+        if ($response->getStatusCode() != 204) {
             throw new \Exception($response->getReasonPhrase(), $response->getStatusCode());
         }
-        $response->getStatusCode();
-        $body = json_decode($response->getBody(), true);
-        $this->token = $body['jwt'];
-        file_put_contents($this->getTokenFilename(), $body['jwt']);
+        $headers = $response->getHeader('authorization');
+        if (empty($headers)) {
+            throw new \Exception("No token.");
+        }
+        $this->token = reset($headers);
+        file_put_contents($this->getTokenFilename(), $this->token);
     }
 
     /**
