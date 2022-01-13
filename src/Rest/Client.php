@@ -215,7 +215,7 @@ class Client extends BaseObject
             }
         }
         $options = array_merge($this->options, $options);
-        $options['headers']['Authorization'] = 'Bearer ' . $this->getToken();
+        $options['headers']['Authorization'] = $this->getToken();
         return $options;
     }
 
